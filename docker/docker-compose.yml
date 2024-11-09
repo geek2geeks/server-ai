@@ -1,0 +1,28 @@
+# docker/docker-compose.yml
+version: '3.8'
+
+services:
+  ai_server:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    runtime: nvidia
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=all
+    volumes:
+      - ../:/app
+      - model_cache:/app/model_cache
+    ports:
+      - "8000:8000"  # FastAPI
+      - "6006:6006"  # TensorBoard
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+volumes:
+  model_cache:
