@@ -1,0 +1,5 @@
+# config/cloudflare/config.yml
+tunnel: statista  # Currently shows 'your_tunnel_name'
+ingress:
+  - hostname: api.statista.live    # Currently shows 'ai-server.yourdomain.com'
+  - hostname: monitor.statista.live # Currently shows 'monitor.yourdomain.com'
