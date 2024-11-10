@@ -1,7 +1,12 @@
-# CopyJustica AI Infrastructure
+# GPU-Accelerated AI Server Infrastructure
 
 ## 🚀 Overview
-Enterprise-grade AI infrastructure leveraging RTX 3090 for distributed computing, focusing on legal document processing and multilingual video translation. Successfully implemented GPU-accelerated computing environment with proven performance metrics.
+Enterprise-grade AI infrastructure leveraging RTX 3090 (24GB VRAM) for distributed computing, with proven GPU-accelerated performance metrics.
+
+![GPU Metrics](https://img.shields.io/badge/GPU-RTX%203090-brightgreen)
+![CUDA](https://img.shields.io/badge/CUDA-12.3.1-blue)
+![Python](https://img.shields.io/badge/Python-3.10-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
 
 ## 🏗 Architecture
 
@@ -77,21 +82,23 @@ sequenceDiagram
     Note over Manager,GPU: Continuous Monitoring
 ```
 
-## 📊 Performance Metrics
+## 📊 Validated Performance
 
-### Current Benchmarks
+### Benchmark Results (RTX 3090)
 | Operation | Time | Memory Usage |
 |-----------|------|--------------|
 | 4K Image Transfer | 270.11ms | ~0.75GB |
 | 4K Convolution | 96.07ms | ~1.2GB |
 | Batch Transform (10x) | 4.77ms | ~0.5GB |
 
-### GPU Specifications
-- **Model**: NVIDIA GeForce RTX 3090
-- **VRAM**: 24GB GDDR6X
-- **CUDA Cores**: 10,496
-- **CUDA Version**: 12.3.1
-- **Compute Capability**: 8.6
+### System Specifications
+- **GPU**: NVIDIA GeForce RTX 3090
+  - VRAM: 24GB GDDR6X
+  - CUDA Cores: 10,496
+  - Compute Capability: 8.6
+- **CPU**: AMD Ryzen 5 5600X
+- **RAM**: 24GB DDR4
+- **Storage**: NVMe SSD
 
 ## 🚀 Getting Started
 
@@ -99,15 +106,15 @@ sequenceDiagram
 ```bash
 # Required
 NVIDIA Driver: >= 566.03
-CUDA Toolkit: 12.3.1
+CUDA: 12.3.1
 Docker + NVIDIA Container Toolkit
 ```
 
 ### Quick Start
 ```bash
 # Clone repository
-git clone https://github.com/geek2geeks/copyjustica.git
-cd copyjustica
+git clone https://github.com/geek2geeks/server-ai.git
+cd server-ai
 
 # Build container
 docker compose -f docker/docker-compose.yml build
@@ -116,19 +123,21 @@ docker compose -f docker/docker-compose.yml build
 docker compose -f docker/docker-compose.yml run ai_server
 ```
 
-## 🧪 Test Coverage
+## 🧪 Test Coverage & Status
+![Build Status](https://github.com/geek2geeks/server-ai/workflows/CI/badge.svg)
+![GPU Tests](https://github.com/geek2geeks/server-ai/workflows/GPU%20Tests/badge.svg)
 
 | Component | Status | Coverage |
 |-----------|---------|----------|
 | GPU Utils | ✅ Pass | 100% |
 | OpenCV | ✅ Pass | 100% |
 | Memory Mgmt | ✅ Pass | 100% |
-| Concurrency | 🚧 TODO | 0% |
-| Error Handle | 🚧 TODO | 0% |
+| API Layer | 🚧 In Progress | - |
+| ML Pipeline | 📅 Planned | - |
 
 ## 📝 License
-MIT License - see LICENSE.md
+MIT License - see [LICENSE.md](LICENSE.md)
 
 ## 👥 Contact
-- **Lead Developer**: Pedro Rodrigues
-- **GitHub**: [geek2geeks](https://github.com/geek2geeks)
+- **Developer**: Pedro Rodrigues
+- **GitHub**: [@geek2geeks](https://github.com/geek2geeks)

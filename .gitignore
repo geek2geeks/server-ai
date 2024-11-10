@@ -55,36 +55,25 @@ coverage.xml
 .hypothesis/
 .pytest_cache/
 
-# Logs
-logs/
+# Project Specific
+data/*
+!data/ai/.gitkeep
+!data/models/.gitkeep
+model_cache/*
+!model_cache/.gitkeep
+docs/benchmarks/*
+!docs/benchmarks/.gitkeep
+
+# Logs & Monitoring
 *.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+logs/
+prometheus/data/
+grafana/data/
 
-# OS
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
+# Documentation
+code_documentation_*.md
+
+# Windows specific
 Thumbs.db
-
-# Project specific
-data/
-models/
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-
-# Docker
-.docker/
-
-# Distribution
-dist/
-build/
-
-# Node
-node_modules/
+Desktop.ini
+$RECYCLE.BIN/
