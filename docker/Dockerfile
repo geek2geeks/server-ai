@@ -6,7 +6,9 @@ ENV PYTHONUNBUFFERED=1 \
     DEBIAN_FRONTEND=noninteractive \
     CUDA_HOME=/usr/local/cuda \
     TORCH_CUDA_ARCH_LIST="8.6" \
-    FORCE_CUDA="1"
+    FORCE_CUDA="1" \
+    PATH="/usr/local/bin:${PATH}" \
+    PYTHON_PATH="/usr/bin/python3"
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
@@ -18,7 +20,8 @@ RUN apt-get update && apt-get install -y \
     libsm6 \
     libxext6 \
     libxrender-dev \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && ln -sf /usr/bin/python3 /usr/bin/python
 
 # Set working directory
 WORKDIR /app
@@ -43,4 +46,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
 ENV PYTHONPATH=/app
 
 # Default command
-CMD ["python3", "scripts/docker_test.py"]
+CMD ["python3", "scripts/test_cv_gpu.py"]
