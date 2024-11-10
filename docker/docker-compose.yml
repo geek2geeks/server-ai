@@ -1,5 +1,5 @@
 # docker/docker-compose.yml
-version: '3.8'
+name: copyjustica
 
 services:
   ai_server:
@@ -10,6 +10,7 @@ services:
     environment:
       - NVIDIA_VISIBLE_DEVICES=all
       - NVIDIA_DRIVER_CAPABILITIES=all
+      - PYTHONUNBUFFERED=1
     volumes:
       - ../:/app
       - model_cache:/app/model_cache
@@ -23,6 +24,12 @@ services:
             - driver: nvidia
               count: 1
               capabilities: [gpu]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import torch; assert torch.cuda.is_available()"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
 volumes:
   model_cache:
+    driver: local
