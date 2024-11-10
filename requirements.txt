@@ -1,9 +1,8 @@
-# Deep Learning & GPU
-torch==2.5.1
-torchvision==0.16.1
-torchaudio==2.5.1
-gputil==1.4.0
-psutil==5.9.8
+# Machine Learning
+--extra-index-url https://download.pytorch.org/whl/cu123
+torch==2.1.2+cu123
+torchvision==0.16.2+cu123
+torchaudio==2.1.2+cu123
 
 # Computer Vision
 opencv-python==4.7.0
@@ -15,9 +14,13 @@ matplotlib==3.9.1
 seaborn==0.13.2
 scipy==1.14.1
 
+# System & GPU Monitoring
+gputil==1.4.0
+psutil==5.9.8
+
 # API & Web Services
 fastapi==0.109.1
-uvicorn==0.27.1
+uvicorn[standard]==0.27.1
 python-multipart==0.0.7
 pydantic==2.6.1
 
@@ -31,6 +34,7 @@ pytest-cov==4.1.0
 black==24.1.1
 isort==5.13.2
 mypy==1.8.0
+
 
 # Infrastructure & Configuration
 docker==7.0.0
