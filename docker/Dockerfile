@@ -15,6 +15,9 @@ RUN apt-get update && apt-get install -y \
     git \
     libgl1-mesa-glx \
     libglib2.0-0 \
+    libsm6 \
+    libxext6 \
+    libxrender-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
@@ -25,6 +28,7 @@ COPY requirements.txt .
 
 # Upgrade pip and install dependencies
 RUN python3 -m pip install --no-cache-dir --upgrade pip && \
+    python3 -m pip install --no-cache-dir setuptools wheel && \
     python3 -m pip install --no-cache-dir -r requirements.txt && \
     rm -rf /root/.cache/pip/*
 
