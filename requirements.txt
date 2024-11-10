@@ -1,8 +1,8 @@
 # Machine Learning
---extra-index-url https://download.pytorch.org/whl/cu123
-torch==2.1.2+cu123
-torchvision==0.16.2+cu123
-torchaudio==2.1.2+cu123
+--extra-index-url https://download.pytorch.org/whl/cu121
+torch
+torchvision
+torchaudio
 
 # Computer Vision
 opencv-python==4.7.0
@@ -34,7 +34,6 @@ pytest-cov==4.1.0
 black==24.1.1
 isort==5.13.2
 mypy==1.8.0
-
 
 # Infrastructure & Configuration
 docker==7.0.0

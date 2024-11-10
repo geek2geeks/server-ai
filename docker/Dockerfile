@@ -4,7 +4,9 @@ FROM nvidia/cuda:12.3.1-runtime-ubuntu22.04
 # Set environment variables
 ENV PYTHONUNBUFFERED=1 \
     DEBIAN_FRONTEND=noninteractive \
-    CUDA_HOME=/usr/local/cuda
+    CUDA_HOME=/usr/local/cuda \
+    TORCH_CUDA_ARCH_LIST="8.6" \
+    FORCE_CUDA="1"
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
@@ -21,9 +23,10 @@ WORKDIR /app
 # Copy requirements first for better caching
 COPY requirements.txt .
 
-# Install Python dependencies
-RUN pip3 install --no-cache-dir -r requirements.txt \
-    && rm -rf /root/.cache/pip/*
+# Upgrade pip and install dependencies
+RUN python3 -m pip install --no-cache-dir --upgrade pip && \
+    python3 -m pip install --no-cache-dir -r requirements.txt && \
+    rm -rf /root/.cache/pip/*
 
 # Copy application code
 COPY . .
