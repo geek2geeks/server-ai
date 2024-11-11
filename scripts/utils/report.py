@@ -1,4 +1,4 @@
-# utils/report.py
+# scripts/utils/report.py
 import os
 from pathlib import Path
 from typing import List, Tuple
@@ -22,7 +22,8 @@ def is_relevant_file(file_path: Path) -> bool:
         'code_documentation',
         '__pycache__',
         '.pyc',
-        '.git'
+        '.git',
+        'report.py'  # Exclude self from documentation
     }
     
     if file_path.suffix not in relevant_extensions and file_path.name != '.env':
@@ -56,35 +57,27 @@ def get_relevant_files(root_dir: Path) -> List[Tuple[Path, str]]:
                 
     return sorted(relevant_files)
 
-def generate_tree(path: Path, prefix: str = "", is_last: bool = True, is_root: bool = True) -> str:
-    """Generate a tree structure of the project directory including empty folders."""
-    tree = ""
-    if is_root:
-        tree = path.name + "\n"
+def get_all_paths(root_dir: Path) -> List[str]:
+    """Get all relative paths including empty directories."""
+    paths = []
+    
+    try:
+        # Get all items including empty directories
+        for path in root_dir.rglob('*'):
+            # Skip report.py and its parent directories
+            if 'report.py' in str(path):
+                continue
+                
+            if path.is_file() or (path.is_dir() and not any(path.iterdir())):
+                relative = path.relative_to(root_dir)
+                paths.append(str(relative))
+    except Exception as e:
+        logger.error(f"Error getting paths: {e}")
         
-    indent = "    " if is_last else "│   "
-
-    # Get all items and sort them
-    items = sorted(path.glob('*'))
-    dirs = [d for d in items if d.is_dir() and not d.name.startswith('.')]
-    files = [f for f in items if f.is_file() and not f.name.startswith('.')]
-
-    # Process all items
-    all_items = dirs + files
-    for i, item in enumerate(all_items):
-        is_last_item = i == len(all_items) - 1
-        connector = "└── " if is_last_item else "├── "
-        
-        tree += prefix + connector + item.name + "\n"
-        
-        if item.is_dir():
-            next_prefix = prefix + ("    " if is_last_item else "│   ")
-            tree += generate_tree(item, next_prefix, is_last_item, False)
-
-    return tree
+    return sorted(paths)
 
 def generate_markdown(files: List[Tuple[Path, str]], output_file: Path, root_dir: Path) -> None:
-    """Generate markdown documentation with file tree and contents."""
+    """Generate markdown documentation with paths and contents."""
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     
     with open(output_file, 'w', encoding='utf-8') as f:
@@ -92,11 +85,12 @@ def generate_markdown(files: List[Tuple[Path, str]], output_file: Path, root_dir
         f.write(f"# Project Code Documentation\n\n")
         f.write(f"Generated: {timestamp}\n\n")
         
-        # File Tree
+        # Project Structure
         f.write("## Project Structure\n\n")
-        f.write("```\n")
-        tree = generate_tree(root_dir)
-        f.write(tree)
+        f.write("Relative paths from project root:\n\n")
+        f.write("```text\n")
+        for path in get_all_paths(root_dir):
+            f.write(f"{path}\n")
         f.write("```\n\n")
         
         # File Contents
@@ -118,7 +112,6 @@ def generate_markdown(files: List[Tuple[Path, str]], output_file: Path, root_dir
 
 def main():
     try:
-        # Get project root (parent of script directory)
         script_dir = Path(__file__).resolve()
         root_dir = script_dir.parents[2]  # Adjust based on script location
         

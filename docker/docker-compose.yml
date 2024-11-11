@@ -1,6 +1,13 @@
 # docker/docker-compose.yml
 version: '3.8'
 
+x-logging: &default-logging
+  driver: "json-file"
+  options:
+    max-size: "100m"
+    max-file: "5"
+    compress: "true"
+
 services:
   ai_server:
     build:
@@ -10,44 +17,58 @@ services:
     environment:
       - NVIDIA_VISIBLE_DEVICES=all
       - NVIDIA_DRIVER_CAPABILITIES=all
+      - CUDA_VISIBLE_DEVICES=0
+      - NVIDIA_REQUIRE_CUDA=cuda>=11.8
       - PYTHONUNBUFFERED=1
       - AI_DATA_PATH=${AI_DATA_PATH}
       - MODEL_CACHE_PATH=${MODEL_CACHE_PATH}
-      - API_SECRET_KEY=${API_SECRET_KEY}
     volumes:
-      - ../:/app
+      - ../:/app:ro
       - ai_data:/data
       - model_cache:/app/model_cache
+      - cuda_cache:/cuda-cache
     ports:
-      - "${API_PORT:-8000}:8000"  # FastAPI
-      - "6006:6006"  # TensorBoard
-    depends_on:
-      - redis
-      - prometheus
-      - postgres
+      - "${API_PORT:-8000}:8000"
+    ulimits:
+      memlock: -1
+      stack: 67108864
     deploy:
       resources:
+        limits:
+          cpus: '4.0'
+          memory: 16G
         reservations:
           devices:
             - driver: nvidia
               count: 1
               capabilities: [gpu]
+              device_ids: ['0']
+    logging: *default-logging
     healthcheck:
       test: ["CMD", "python3", "-c", "import torch; assert torch.cuda.is_available()"]
       interval: 30s
       timeout: 10s
       retries: 3
-    command: python3 -m uvicorn src.api.server:app --host 0.0.0.0 --port 8000 --reload
 
   redis:
     image: redis:alpine
-    command: redis-server --requirepass ${REDIS_PASSWORD}
+    command: redis-server /usr/local/etc/redis/redis.conf --requirepass ${REDIS_PASSWORD}
     environment:
       - REDIS_PASSWORD=${REDIS_PASSWORD}
-    ports:
-      - "${REDIS_PORT:-6379}:6379"
+      - REDIS_TLS_ENABLED=true
     volumes:
+      - ../config/redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
       - redis_data:/data
+    ports:
+      - "127.0.0.1:${REDIS_PORT:-6379}:6379"
+    sysctls:
+      net.core.somaxconn: 1024
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 6G
+    logging: *default-logging
     healthcheck:
       test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
       interval: 10s
@@ -56,11 +77,8 @@ services:
 
   prometheus:
     image: prom/prometheus:latest
-    environment:
-      - PROMETHEUS_BASIC_AUTH_USER=${PROMETHEUS_BASIC_AUTH_USER}
-      - PROMETHEUS_BASIC_AUTH_PASS=${PROMETHEUS_BASIC_AUTH_PASS}
     volumes:
-      - ./prometheus:/etc/prometheus
+      - ../config/prometheus:/etc/prometheus:ro
       - prometheus_data:/prometheus
     ports:
       - "${PROMETHEUS_PORT:-9090}:9090"
@@ -69,13 +87,12 @@ services:
       - '--storage.tsdb.path=/prometheus'
       - '--web.console.libraries=/usr/share/prometheus/console_libraries'
       - '--web.console.templates=/usr/share/prometheus/consoles'
-      - '--web.authentication.enabled=true'
-      - '--web.authentication.type=basic'
-    healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://localhost:9090/-/healthy"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 4G
+    logging: *default-logging
 
   grafana:
     image: grafana/grafana:latest
@@ -85,32 +102,16 @@ services:
       - GF_USERS_DEFAULT_THEME=dark
       - GF_AUTH_ANONYMOUS_ENABLED=false
     volumes:
+      - ../config/grafana:/etc/grafana:ro
       - grafana_data:/var/lib/grafana
     ports:
       - "${GRAFANA_PORT:-3000}:3000"
-    depends_on:
-      - prometheus
-    healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/api/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-  postgres:
-    image: postgres:latest
-    environment:
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DB=${POSTGRES_DB}
-    ports:
-      - "${POSTGRES_PORT:-5432}:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 2G
+    logging: *default-logging
 
 volumes:
   ai_data:
@@ -125,11 +126,11 @@ volumes:
       type: none
       o: bind
       device: ${MODEL_CACHE_PATH}
+  cuda_cache:
+    driver: local
   redis_data:
     driver: local
   prometheus_data:
     driver: local
   grafana_data:
-    driver: local
-  postgres_data:
     driver: local
