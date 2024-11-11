@@ -1,0 +1,62 @@
+# Location: E:/justica/scripts/setup/setup_permissions.py
+
+import os
+import stat
+from pathlib import Path
+import subprocess
+import sys
+
+def setup_nginx_permissions():
+    # Define paths
+    base_dir = Path("E:/justica")
+    nginx_dir = base_dir / "config" / "services" / "nginx"
+    htpasswd_path = nginx_dir / ".htpasswd"
+    
+    # Create directories if they don't exist
+    nginx_dir.mkdir(parents=True, exist_ok=True)
+    
+    try:
+        # Create .htpasswd file with proper permissions
+        if htpasswd_path.exists():
+            htpasswd_path.unlink()  # Remove if exists
+            
+        # Create empty file
+        htpasswd_path.touch()
+        
+        # Set proper permissions using icacls
+        current_user = os.environ.get('USERNAME')
+        
+        commands = [
+            f'icacls "{nginx_dir}" /grant "{current_user}:(OI)(CI)F"',
+            f'icacls "{htpasswd_path}" /grant "{current_user}:F"'
+        ]
+        
+        for cmd in commands:
+            subprocess.run(cmd, shell=True, check=True)
+            
+        print("Permissions set successfully!")
+        print(f"Nginx directory: {nginx_dir}")
+        print(f"htpasswd path: {htpasswd_path}")
+        
+        # Generate htpasswd content
+        import bcrypt
+        username = "fixola"
+        password = "As!101010"
+        hashed = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
+        
+        with open(htpasswd_path, "w") as f:
+            f.write(f"{username}:{hashed}\n")
+            
+        print("Auth file created successfully!")
+        
+    except Exception as e:
+        print(f"Error setting permissions: {e}")
+        sys.exit(1)
+
+if __name__ == "__main__":
+    if os.name != 'nt':
+        print("This script is designed for Windows systems")
+        sys.exit(1)
+        
+    print("Setting up nginx permissions...")
+    setup_nginx_permissions()
