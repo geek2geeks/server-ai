@@ -1,4 +1,4 @@
-# src/api/server.py
+# E:/justica/src/api/server.py
 
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -10,7 +10,8 @@ from pathlib import Path
 from typing import Dict, List, Optional
 import logging
 
-from src.core.gpu_utils import GPUManager
+# Fix the import path
+from src.core.gpu.gpu_utils import GPUManager  # Changed from src.core.gpu_utils
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -56,84 +57,70 @@ async def health_check() -> Dict:
         logger.error(f"Health check failed: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/process/image")
-async def process_image(
-    file: UploadFile = File(...),
-    operations: Optional[List[str]] = ["resize", "enhance"]
-) -> Dict:
+@app.post("/process-image")
+async def process_image(file: UploadFile = File(...)):
     """
-    Process uploaded image using GPU acceleration.
+    Process an uploaded image using GPU-accelerated OpenCV.
     """
     try:
-        # Read image
         contents = await file.read()
-        nparr = np.frombuffer(contents, np.uint8)
-        image = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-        
-        # Convert to GPU tensor
-        with gpu_manager.allocate_memory(required_memory_mb=1000) as device_id:
-            image_tensor = torch.from_numpy(image).cuda(device_id)
-            
-            results = {}
-            processing_times = {}
-            
-            # Process based on requested operations
-            for op in operations:
-                start_time = torch.cuda.Event(enable_timing=True)
-                end_time = torch.cuda.Event(enable_timing=True)
-                
-                start_time.record()
-                if op == "resize":
-                    # Resize to 4K
-                    processed = torch.nn.functional.interpolate(
-                        image_tensor.permute(2, 0, 1).unsqueeze(0).float(),
-                        size=(2160, 3840),
-                        mode='bilinear'
-                    )
-                elif op == "enhance":
-                    # Simple enhancement (example)
-                    processed = image_tensor.float() * 1.2
-                    processed = torch.clamp(processed, 0, 255)
-                
-                end_time.record()
-                torch.cuda.synchronize()
-                
-                processing_times[op] = f"{start_time.elapsed_time(end_time):.2f}ms"
-                results[op] = processed.cpu().numpy()
+        np_image = np.frombuffer(contents, np.uint8)
+        image = cv2.imdecode(np_image, cv2.IMREAD_COLOR)
 
-            return {
-                "status": "success",
-                "processing_times": processing_times,
-                "gpu_memory": {
-                    "allocated": f"{torch.cuda.memory_allocated()/1e9:.2f}GB",
-                    "reserved": f"{torch.cuda.memory_reserved()/1e9:.2f}GB"
-                }
-            }
-            
+        # Upload image to GPU
+        gpu_image = cv2.cuda_GpuMat()
+        gpu_image.upload(image)
+
+        # Apply Gaussian Blur on GPU
+        gpu_blurred = cv2.cuda.GaussianBlur(gpu_image, (15, 15), 0)
+        result_image = gpu_blurred.download()
+
+        _, buffer = cv2.imencode('.jpg', result_image)
+        return JSONResponse(content={"status": "success", "data": buffer.tobytes().decode('latin1')})
     except Exception as e:
         logger.error(f"Image processing failed: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/gpu/stats")
-async def get_gpu_statistics() -> Dict:
+@app.get("/gpu-info")
+async def get_gpu_info() -> Dict:
     """
-    Get detailed GPU statistics.
+    Get detailed GPU information.
     """
     try:
-        stats = gpu_manager.get_gpu_stats()
-        memory_stats = gpu_manager.get_system_memory_usage()
-        
+        if not torch.cuda.is_available():
+            raise Exception("CUDA is not available")
+
+        gpu_properties = torch.cuda.get_device_properties(0)
         return {
-            "gpu_stats": stats,
-            "system_memory": memory_stats,
-            "torch_memory": {
-                "allocated": f"{torch.cuda.memory_allocated()/1e9:.2f}GB",
-                "reserved": f"{torch.cuda.memory_reserved()/1e9:.2f}GB",
-                "max_allocated": f"{torch.cuda.max_memory_allocated()/1e9:.2f}GB"
-            }
+            "name": gpu_properties.name,
+            "total_memory": f"{gpu_properties.total_memory / 1e9:.2f} GB",
+            "multi_processor_count": gpu_properties.multi_processor_count,
+            "cuda_cores": gpu_manager.get_cuda_cores(0),
+            "compute_capability": f"{gpu_properties.major}.{gpu_properties.minor}"
         }
     except Exception as e:
-        logger.error(f"Failed to get GPU stats: {str(e)}")
+        logger.error(f"Failed to get GPU info: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/run-model")
+async def run_model(data: Dict):
+    """
+    Run inference on a given input using a pre-loaded model.
+    """
+    try:
+        # Placeholder for model inference
+        input_data = data.get("input")
+        if input_data is None:
+            raise ValueError("No input data provided")
+
+        # Example dummy model operation
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        input_tensor = torch.tensor(input_data).to(device)
+        output = input_tensor * 2  # Dummy operation
+
+        return {"status": "success", "output": output.cpu().tolist()}
+    except Exception as e:
+        logger.error(f"Model inference failed: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":

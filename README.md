@@ -1,143 +1,237 @@
 # GPU-Accelerated AI Server Infrastructure
 
 ## 🚀 Overview
-Enterprise-grade AI infrastructure leveraging RTX 3090 (24GB VRAM) for distributed computing, with proven GPU-accelerated performance metrics.
+Enterprise-grade AI infrastructure leveraging RTX 3090 (24GB VRAM) for distributed computing, designed for high-performance AI applications.
 
 ![GPU Metrics](https://img.shields.io/badge/GPU-RTX%203090-brightgreen)
 ![CUDA](https://img.shields.io/badge/CUDA-12.3.1-blue)
 ![Python](https://img.shields.io/badge/Python-3.10-blue)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.104.1-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
+![Status](https://img.shields.io/badge/status-development-orange)
 
 ## 🏗 Architecture
 
 ### System Architecture
 ```mermaid
-flowchart TB
+graph TB
+    subgraph External["External Layer"]
+        CloudFlare["Cloudflare SSL"]
+        Domain["statista.live"]
+    end
+
+    subgraph Services["Service Layer"]
+        Nginx["Nginx Reverse Proxy"]
+        Grafana["Monitoring Dashboard"]
+        Prometheus["Metrics Collection"]
+        Redis["Cache Layer"]
+    end
+
+    subgraph Core["AI Core"]
+        API["FastAPI Server"]
+        GPUMgr["GPU Resource Manager"]
+        TaskQueue["Task Scheduler"]
+        
+        subgraph ML["ML Components"]
+            RAG["RAG System"]
+            CV["Computer Vision"]
+            NLP["Language Processing"]
+        end
+    end
+
     subgraph Hardware["Hardware Layer"]
         GPU["RTX 3090 GPU"]
         CPU["Ryzen 5 5600X"]
-        MEM["24GB RAM"]
+        Memory["24GB RAM"]
     end
 
-    subgraph Container["Docker Container"]
-        CUDA["CUDA 12.3.1"]
-        PyTorch["PyTorch + CUDA"]
-        OpenCV["OpenCV 4.8.1"]
-        
-        subgraph Core["Core Services"]
-            GPUManager["GPU Manager"]
-            TaskQueue["Task Queue"]
-            Monitor["Resource Monitor"]
-        end
-        
-        subgraph API["API Layer"]
-            FastAPI["FastAPI Server"]
-            Endpoints["REST Endpoints"]
-            WebSocket["WebSocket Updates"]
-        end
-        
-        subgraph ML["ML Pipeline"]
-            RAG["RAG System"]
-            VideoProc["Video Processing"]
-            Translation["Translation Engine"]
-        end
-    end
-
-    GPU --> CUDA
-    CUDA --> PyTorch
-    CUDA --> OpenCV
-    PyTorch --> GPUManager
-    OpenCV --> GPUManager
-    GPUManager --> Core
-    Core --> API
-    Core --> ML
+    External --> Services
+    Services --> Core
+    Core --> Hardware
 ```
 
-### Resource Management Flow
+### Resource Management
 ```mermaid
 sequenceDiagram
     participant Client
-    participant API as FastAPI Server
-    participant Manager as GPU Manager
-    participant GPU as RTX 3090
-    participant Monitor as Resource Monitor
+    participant Nginx
+    participant API
+    participant GPU
+    participant Monitor
 
-    Client->>API: Submit Task
-    API->>Manager: Request Resources
-    Manager->>Monitor: Check GPU Status
-    Monitor->>GPU: Get Memory Stats
-    GPU-->>Monitor: Memory Available
-    Monitor-->>Manager: Resource Status
+    Client->>Nginx: HTTPS Request
+    Nginx->>API: Forward Request
+    API->>GPU: Request Resources
+    GPU-->>Monitor: Report Status
+    Monitor-->>API: Resource Status
     
     alt Resources Available
-        Manager->>GPU: Allocate Memory
-        GPU-->>Manager: Memory Allocated
-        Manager-->>API: Resources Ready
-        API->>Client: Task Accepted
-    else Resources Busy
-        Manager-->>API: Resource Busy
-        API->>Client: Retry Later
+        API->>GPU: Allocate Memory
+        GPU-->>API: Task Complete
+        API-->>Client: Success Response
+    else Resources Exhausted
+        API-->>Client: Retry with Backoff
     end
-
-    Note over Manager,GPU: Continuous Monitoring
 ```
 
-## 📊 Validated Performance
+## 💻 Core Components
 
-### Benchmark Results (RTX 3090)
-| Operation | Time | Memory Usage |
-|-----------|------|--------------|
-| 4K Image Transfer | 270.11ms | ~0.75GB |
-| 4K Convolution | 96.07ms | ~1.2GB |
-| Batch Transform (10x) | 4.77ms | ~0.5GB |
+### AI Server
+- FastAPI-based REST API
+- Real-time GPU resource management
+- Task queue and scheduling
+- Automatic memory optimization
+
+### Monitoring
+- Real-time GPU metrics
+- System resource tracking
+- Task performance analytics
+- Alert system
+
+### Security
+- Cloudflare SSL/TLS
+- Rate limiting
+- Authentication system
+- Network isolation
+
+## 📊 Performance Metrics
+
+### GPU Benchmarks
+```python
+# Latest benchmark results
+{
+    "matmul_10000x10000": {
+        "compute_time_ms": 84.02,
+        "tflops": 11.96
+    },
+    "memory_bandwidth": {
+        "size_gb": 0.5,
+        "bandwidth_gbps": 170.04
+    }
+}
+```
 
 ### System Specifications
-- **GPU**: NVIDIA GeForce RTX 3090
-  - VRAM: 24GB GDDR6X
-  - CUDA Cores: 10,496
-  - Compute Capability: 8.6
-- **CPU**: AMD Ryzen 5 5600X
-- **RAM**: 24GB DDR4
-- **Storage**: NVMe SSD
+| Component | Specification | Performance |
+|-----------|--------------|-------------|
+| GPU | RTX 3090 24GB | 35.58 TFLOPS |
+| CPU | Ryzen 5 5600X | 6C/12T @ 4.6GHz |
+| RAM | 24GB DDR4 | 3200MHz |
+| Storage | NVMe SSD | 3.5GB/s Read |
 
-## 🚀 Getting Started
+## 🚀 Quick Start
 
 ### Prerequisites
 ```bash
-# Required
-NVIDIA Driver: >= 566.03
-CUDA: 12.3.1
+# System Requirements
+NVIDIA Driver >= 566.03
+CUDA >= 12.3.1
 Docker + NVIDIA Container Toolkit
+Python >= 3.10
 ```
 
-### Quick Start
+### Installation
 ```bash
-# Clone repository
-git clone https://github.com/geek2geeks/server-ai.git
-cd server-ai
+# Clone and setup
+git clone https://github.com/geek2geeks/justica.git
+cd justica
 
-# Build container
-docker compose -f docker/docker-compose.yml build
+# Create environment
+conda create -n pytorch_gpu python=3.10
+conda activate pytorch_gpu
 
-# Validate GPU setup
-docker compose -f docker/docker-compose.yml run ai_server
+# Install dependencies
+pip install -r requirements.txt
+
+# Start services
+docker-compose -f docker/docker-compose.yml up -d
 ```
 
-## 🧪 Test Coverage & Status
-![Build Status](https://github.com/geek2geeks/server-ai/workflows/CI/badge.svg)
-![GPU Tests](https://github.com/geek2geeks/server-ai/workflows/GPU%20Tests/badge.svg)
+### Validation
+```bash
+# Run system validation
+python scripts/monitoring/validate.py
 
-| Component | Status | Coverage |
-|-----------|---------|----------|
-| GPU Utils | ✅ Pass | 100% |
-| OpenCV | ✅ Pass | 100% |
-| Memory Mgmt | ✅ Pass | 100% |
-| API Layer | 🚧 In Progress | - |
-| ML Pipeline | 📅 Planned | - |
+# Run GPU benchmarks
+python scripts/utils/benchmark.py
+```
 
-## 📝 License
-MIT License - see [LICENSE.md](LICENSE.md)
+## 📋 API Documentation
 
-## 👥 Contact
+### Core Endpoints
+```yaml
+/health:
+  GET: System health status
+  
+/gpu/stats:
+  GET: Real-time GPU metrics
+
+/process-image:
+  POST: GPU-accelerated image processing
+```
+
+### Example Usage
+```python
+import requests
+
+# Health check
+response = requests.get("https://api.statista.live/health")
+print(response.json())
+
+# GPU stats
+stats = requests.get("https://api.statista.live/gpu/stats")
+print(stats.json())
+```
+
+## 🔧 Development
+
+### Directory Structure
+```
+justica/
+├── config/            # Service configurations
+├── src/              # Source code
+│   ├── api/          # FastAPI application
+│   ├── core/         # Core utilities
+│   └── ml/           # ML components
+├── scripts/          # Utility scripts
+└── docker/           # Container configs
+```
+
+### Testing
+```bash
+# Run all tests
+python -m pytest tests/
+
+# Run GPU tests
+python -m pytest tests/unit/test_gpu.py
+```
+
+## 📈 Status & Roadmap
+
+### Current Status
+- ✅ GPU Infrastructure
+- ✅ Basic API
+- ✅ Monitoring
+- 🚧 SSL/Domain
+- 📅 ML Pipeline
+
+### Upcoming Features
+1. RAG System Integration
+2. Video Processing Pipeline
+3. Custom ML Model Support
+4. Advanced Monitoring
+
+## 📞 Support
+
+### Contact
 - **Developer**: Pedro Rodrigues
+- **Email**: ukpedropt@hotmail.com
 - **GitHub**: [@geek2geeks](https://github.com/geek2geeks)
+
+### Contributing
+1. Fork the repository
+2. Create feature branch
+3. Submit pull request
+
+## 📄 License
+MIT License - see [LICENSE.md](LICENSE.md)
