@@ -1,4 +1,5 @@
-# docker/Dockerfile
+# Location: E:/justica/docker/Dockerfile
+
 FROM nvidia/cuda:12.3.1-runtime-ubuntu22.04
 
 # Set environment variables
@@ -10,7 +11,7 @@ ENV PYTHONUNBUFFERED=1 \
     PATH="/usr/local/bin:${PATH}" \
     PYTHON_PATH="/usr/bin/python3"
 
-# Install system dependencies
+# Install system dependencies including OpenCV requirements
 RUN apt-get update && apt-get install -y \
     python3.10 \
     python3-pip \
@@ -20,6 +21,10 @@ RUN apt-get update && apt-get install -y \
     libsm6 \
     libxext6 \
     libxrender-dev \
+    libgl1 \
+    ffmpeg \
+    libx264-dev \
+    libopencv-dev \
     && rm -rf /var/lib/apt/lists/* \
     && ln -sf /usr/bin/python3 /usr/bin/python
 
@@ -46,4 +51,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
 ENV PYTHONPATH=/app
 
 # Default command
-CMD ["python3", "scripts/test_cv_gpu.py"]
+CMD ["python3", "-m", "src.api.server"]

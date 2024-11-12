@@ -1,6 +1,6 @@
 {
-  "timestamp": "2024-11-10T15:53:07.687004",
-  "status": "passed",
+  "timestamp": "2024-11-12T14:25:21.902841",
+  "status": "failed",
   "tests": {
     "gpu": {
       "status": "passed",
@@ -17,7 +17,7 @@
         },
         "performance_test": {
           "matrix_size": "10000x10000",
-          "computation_time": "107.27ms"
+          "computation_time": "200.78ms"
         }
       }
     },
@@ -33,8 +33,10 @@
       }
     },
     "directories": {
-      "status": "passed",
-      "missing_directories": []
+      "status": "failed",
+      "missing_directories": [
+        "config/services/redis"
+      ]
     },
     "resources": {
       "status": "passed",
@@ -42,17 +44,17 @@
         "cpu": {
           "cores": 6,
           "threads": 12,
-          "usage": "16.3%"
+          "usage": "10.8%"
         },
         "memory": {
           "total": "23.9GB",
-          "available": "10.4GB",
-          "percent": "56.6%"
+          "available": "14.5GB",
+          "percent": "39.4%"
         },
         "disk": {
           "total": "931.4GB",
-          "free": "749.3GB",
-          "percent": "19.5%"
+          "free": "745.9GB",
+          "percent": "19.9%"
         }
       }
     }

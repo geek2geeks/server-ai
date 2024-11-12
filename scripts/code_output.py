@@ -26,6 +26,17 @@ def is_relevant_file(file_path: Path) -> bool:
         'report.py'  # Exclude self from documentation
     }
     
+    exclude_directories = {
+        '$RECYCLE.BIN',
+        'System Volume Information',
+        'node_modules',
+        '__pycache__',
+        '.git',
+        # ...other directories to exclude...
+    }
+    if any(dir_name in file_path.parts for dir_name in exclude_directories):
+        return False
+
     if file_path.suffix not in relevant_extensions and file_path.name != '.env':
         return False
         
@@ -46,7 +57,7 @@ def get_relevant_files(root_dir: Path) -> List[Tuple[Path, str]]:
                         logger.warning(f"Skipping large file: {path}")
                         continue
                         
-                    with open(path, 'r', encoding='utf-8') as f:
+                    with open(path, 'r', encoding='utf-8', errors='ignore') as f:
                         content = f.read()
                     relative_path = path.relative_to(root_dir)
                     relevant_files.append((relative_path, content))
@@ -88,47 +99,4 @@ def generate_markdown(files: List[Tuple[Path, str]], output_file: Path, root_dir
         # Project Structure
         f.write("## Project Structure\n\n")
         f.write("Relative paths from project root:\n\n")
-        f.write("```text\n")
-        for path in get_all_paths(root_dir):
-            f.write(f"{path}\n")
-        f.write("```\n\n")
-        
-        # File Contents
-        f.write("## File Contents\n\n")
-        for file_path, content in files:
-            f.write(f"### {file_path}\n\n")
-            
-            extension = file_path.suffix[1:] if file_path.suffix else 'env'
-            lang_map = {
-                'py': 'python',
-                'yml': 'yaml',
-                'yaml': 'yaml',
-                'json': 'json',
-                'env': 'ini'
-            }
-            lang = lang_map.get(extension, 'text')
-            
-            f.write(f"```{lang}\n{content}\n```\n\n")
-
-def main():
-    try:
-        script_dir = Path(__file__).resolve()
-        root_dir = script_dir.parents[2]  # Adjust based on script location
-        
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        output_file = root_dir / f'code_documentation_{timestamp}.md'
-        
-        logger.info("Scanning project files...")
-        relevant_files = get_relevant_files(root_dir)
-        
-        logger.info("Generating documentation...")
-        generate_markdown(relevant_files, output_file, root_dir)
-        
-        logger.info(f"Documentation generated: {output_file}")
-        
-    except Exception as e:
-        logger.error(f"Error generating documentation: {e}")
-        raise
-
-if __name__ == "__main__":
-    main()
+        f.write("
