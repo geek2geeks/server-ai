@@ -51,13 +51,5 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
 # Set Python path
 ENV PYTHONPATH=/app
 
-# Create a script to start both servers
-RUN echo '#!/bin/bash\n\
-python3 -c "from src.core.monitoring.server import run_monitoring_server; import threading; \
-thread = threading.Thread(target=run_monitoring_server, args=(8001,), daemon=True); \
-thread.start()" & \
-python3 -m src.api.server' > /app/start.sh && \
-chmod +x /app/start.sh
-
 # Default command
-CMD ["/app/start.sh"]
+CMD ["python3", "-m", "src.api.unified_server"]
