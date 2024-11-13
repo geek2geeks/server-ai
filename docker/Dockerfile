@@ -38,6 +38,7 @@ COPY requirements.txt .
 RUN python3 -m pip install --no-cache-dir --upgrade pip && \
     python3 -m pip install --no-cache-dir setuptools wheel && \
     python3 -m pip install --no-cache-dir -r requirements.txt && \
+    python3 -m pip install --no-cache-dir prometheus_client && \
     rm -rf /root/.cache/pip/*
 
 # Copy application code
@@ -50,5 +51,13 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
 # Set Python path
 ENV PYTHONPATH=/app
 
+# Create a script to start both servers
+RUN echo '#!/bin/bash\n\
+python3 -c "from src.core.monitoring.server import run_monitoring_server; import threading; \
+thread = threading.Thread(target=run_monitoring_server, args=(8001,), daemon=True); \
+thread.start()" & \
+python3 -m src.api.server' > /app/start.sh && \
+chmod +x /app/start.sh
+
 # Default command
-CMD ["python3", "-m", "src.api.server"]
+CMD ["/app/start.sh"]
