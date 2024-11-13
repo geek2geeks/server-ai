@@ -1,0 +1,169 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "title": "GPU Core Metrics",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "type": "row",
+      "collapsed": false,
+      "panels": [
+        {
+          "title": "GPU Utilization",
+          "type": "gauge",
+          "datasource": "Prometheus",
+          "targets": [
+            {
+              "expr": "gpu_utilization",
+              "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "green", "value": null },
+                  { "color": "yellow", "value": 70 },
+                  { "color": "red", "value": 85 }
+                ]
+              },
+              "unit": "percent"
+            }
+          }
+        },
+        {
+          "title": "Memory Usage",
+          "type": "timeseries",
+          "datasource": "Prometheus",
+          "targets": [
+            {
+              "expr": "gpu_memory_used_mb",
+              "legendFormat": "Used",
+              "refId": "A"
+            },
+            {
+              "expr": "gpu_memory_total_mb",
+              "legendFormat": "Total",
+              "refId": "B"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Temperature & Power",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
+      "type": "row",
+      "collapsed": false,
+      "panels": [
+        {
+          "title": "GPU Temperature",
+          "type": "gauge",
+          "datasource": "Prometheus",
+          "targets": [
+            {
+              "expr": "gpu_temperature_celsius",
+              "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "green", "value": null },
+                  { "color": "yellow", "value": 75 },
+                  { "color": "red", "value": 85 }
+                ]
+              },
+              "unit": "celsius"
+            }
+          }
+        },
+        {
+          "title": "Power Usage",
+          "type": "timeseries",
+          "datasource": "Prometheus",
+          "targets": [
+            {
+              "expr": "gpu_power_watts",
+              "refId": "A"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Performance Metrics",
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 8
+      },
+      "type": "row",
+      "collapsed": false,
+      "panels": [
+        {
+          "title": "Operation Latency",
+          "type": "timeseries",
+          "datasource": "Prometheus",
+          "targets": [
+            {
+              "expr": "ai_inference_latency_ms",
+              "legendFormat": "Inference",
+              "refId": "A"
+            },
+            {
+              "expr": "ai_batch_processing_ms",
+              "legendFormat": "Batch Processing",
+              "refId": "B"
+            }
+          ]
+        },
+        {
+          "title": "Error Counters",
+          "type": "stat",
+          "datasource": "Prometheus",
+          "targets": [
+            {
+              "expr": "gpu_cuda_errors_total",
+              "legendFormat": "CUDA Errors",
+              "refId": "A"
+            },
+            {
+              "expr": "gpu_memory_errors_total",
+              "legendFormat": "Memory Errors",
+              "refId": "B"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "refresh": "5s",
+  "schemaVersion": 38,
+  "style": "dark",
+  "time": {
+    "from": "now-15m",
+    "to": "now"
+  },
+  "title": "GPU Performance Dashboard",
+  "version": 1
+}
